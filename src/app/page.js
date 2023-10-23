@@ -1,113 +1,242 @@
-import Image from 'next/image'
+"use client"; // This is a client component 👈🏽
+
+// 👇👇👇👇👇👇👇👇 REST API Example Below 👇👇👇👇👇👇👇👇
+
+
+
+// import Image from 'next/image'
+// import { useEffect, useState } from 'react'
+// import {
+//   Card,
+//   CardHeader,
+//   CardBody,
+//   CardFooter,
+//   Typography,
+//   Tooltip,
+// } from "@material-tailwind/react";
+
+
+
+
+// export default function Home() {
+
+//🧠  Create a state variables to store the data returned from the API 
+
+//   const [data, setData] = useState(null);
+//   const [characterData, setCharacterData] = useState([]);
+
+//   🧠  Create a function to fetch the data from the API
+//   async function fetchRickAndMortyData() {
+//     const apiUrl = 'https://rickandmortyapi.com/api/character/';
+
+  
+//   🧠 Make a request to the API and store the response in a variable
+//     try {
+//       const response = await fetch(apiUrl);
+//       if (!response.ok) {
+//         throw new Error('Network response was not ok');
+//       }
+
+//       const data = await response.json();
+//       return data;
+//     } catch (error) {
+//       console.error('Error fetching data:', error);
+//       throw error;
+//     }
+//   }
+// /🧠 
+//   useEffect(() => {
+//     fetchRickAndMortyData().then(data => {
+//       for (let i = 0; i < data.results.length; i++) {
+   //🧠 Fields to be displayed on card Name, Status, Origin, Location, Image and Episodes stored in a object
+//         const character = {
+ 
+//           name: data.results[i].name,
+//           status: data.results[i].status,
+//           origin: data.results[i].origin.name,
+//           location: data.results[i].location.name,
+//           image: data.results[i].image,
+//           episodes: data.results[i].episode[0]
+//         }
+///🧠  Push the object into the state variable
+//         setCharacterData(prevState => [...prevState, character])
+//       }
+//     });
+//   }
+
+//   , []);
+
+//   return (
+//     <div>
+
+//       <div>
+// 🧠  Map through the state variable and display the data on the card
+
+//         {characterData.map((character, index) => {
+//           return (
+//             <div key={index}>
+//               <Card className=" ml-5 mt-3 mb-3 w-96 bg-gray-800">
+//       <CardHeader floated={false} className=" h-200" >
+//       <Image src={character.image} alt={character.name} width="0" height="0" sizes='100vw' className='w-full h-auto' />
+//       </CardHeader>
+//       <CardBody className="text-center">
+//         <Typography variant="h4" color="white" className="mb-2">
+//         {character.name}
+//         </Typography>
+//         <Typography color={character.status === 'Alive' ? "green" : "red" } className="font-medium" textGradient>
+//         {character.status}
+//         </Typography>
+//       </CardBody>
+//       <CardFooter className="overflow:auto  flex justify-centerr pt-2 text-white">
+//       {character.origin} <br />
+
+//       {character.location} <br />
+//       {character.episodes}
+//       </CardFooter>
+
+//     </Card>
+//             </div>
+
+//           )
+//         })}
+
+//     </div>
+//     </div>
+//   )
+// }
+
+//👇👇👇👇👇👇👇👇 GraphQl Example Below👇👇👇👇👇👇👇👇
+
+// Import necessary libraries
+import { useEffect, useState } from "react";
+import { ApolloClient, InMemoryCache, gql } from "@apollo/client";
+import {
+  Card,
+  CardHeader,
+  CardBody,
+  CardFooter,
+  Typography,
+} from "@material-tailwind/react";
+
+// Create an Apollo Client
+const client = new ApolloClient({
+  uri: "https://rickandmortyapi.com/graphql", // GraphQL endpoint different from REST API endpoint
+  //Apollo Client stores the data in its cache once it's fetched. This is to avoid making unnecessary requests to the API.
+  cache: new InMemoryCache(),
+});
+
 
 export default function Home() {
+  // Create a state variable to store the data returned from the API
+  const [characterData, setCharacterData] = useState([]);
+
+  // Define a GraphQL query to fetch character data
+  const GET_RICK_AND_MORTY_CHARACTERS = gql`
+  query {
+    characters {
+      results {
+        id
+        name
+        status
+        origin {
+          name
+        }
+        location {
+          name
+        }
+        image
+        episode {
+          air_date
+          name
+         
+        }
+      }
+    }
+  }
+
+  `;
+
+  // Create a function to map over episode data and return only the first episode
+const characterDataWithOneEpisode = characterData.map((character) => {
+  // Check if there are episodes available for the character
+  if (character.episode.length > 0) {
+    // Select the first episode from the list
+    const firstEpisode = character.episode[0];
+
+    // Update the character object to include only the selected episode
+    return {
+      ...character,
+      episode: [firstEpisode], // Store the selected episode as an array
+    };
+  } else {
+    // If there are no episodes, leave the character's episode field empty
+    return character;
+  }
+});
+
+
+// 
+  useEffect(() => {
+    // Fetch data using Apollo Client and GraphQL query
+    client
+    //  Make a request to the API and store the response in a variable
+      .query({ query: GET_RICK_AND_MORTY_CHARACTERS })
+//  Update the state variable with the data from the API
+      .then((result) => {
+        const data = result.data.characters.results;
+        setCharacterData(data);
+      })
+      .catch((error) => {
+        console.error("Error fetching data:", error);
+      });
+  }, []);
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">src/app/page.js</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{' '}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
+    <div>
+      <h1 className="text-white text-3xl text-center mb-5 mt-5">Rick and Morty Characters</h1>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 justify-center ">
+        {characterData.map((character, index) => {
+          return (
+            <div className="flex justify-center"  key={index}>
+              <Card className=" mt-3 mb-3 w-96 bg-gray-800 ">
+                <CardHeader floated={false} className="h-200">
+                  <img
+                    src={character.image}
+                    alt={character.name}
+                    width="200"
+                    height="200"
+                    className="w-full h-auto"
+                  />
+                </CardHeader>
+                <CardBody className="text-center">
+                  <Typography variant="h4" color="white" className="mb-2">
+                    {character.name}
+                  </Typography>
+                  <Typography
+                    color={character.status === 'Alive' ? 'green' : 'red'}
+                    className="font-medium"
+                    textGradient
+                  >
+                    {character.status}
+                  </Typography>
+                </CardBody>
+                <CardFooter className=" pt-2 text-white">
+                  <div className=" text-center">
+                  <h2>Origin:   {character.origin.name} </h2> <br />
+                  
+                  <h2>Location: {character.location.name} </h2> <br />
+               
+                  <h2>First Appearance: {character.episode[0].name} </h2> <br />
+                 
+                  <h2>Latest Appearance: {character.episode[(character.episode.length -1)].name} </h2> <br />
+                  
+                  </div>
+                </CardFooter>
+              </Card>
+            </div>
+          );
+        })}
       </div>
-
-      <div className="relative flex place-items-center before:absolute before:h-[300px] before:w-[480px] before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 before:lg:h-[360px] z-[-1]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Docs{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800 hover:dark:bg-opacity-30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Learn{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Templates{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Explore the Next.js 13 playground.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Deploy{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
-  )
+    </div>
+  );
 }
